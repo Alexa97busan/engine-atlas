@@ -1,6 +1,6 @@
 (function () {
   // 브라우저에 저장된 옛 data.js와 새 app.js가 섞이면 화면이 비므로, 그때는 새로고침을 안내한다
-  if (typeof E === "undefined" || typeof TBL === "undefined" || typeof TM === "undefined") {
+  if (typeof E === "undefined" || typeof TBL === "undefined" || typeof TM === "undefined" || typeof IMG === "undefined") {
     document.querySelector(".wrap").insertAdjacentHTML("afterbegin", '<p class="note">데이터를 불러오지 못했습니다. Ctrl+F5(맥은 Cmd+Shift+R)로 새로고침해 주세요.</p>');
     return;
   }
@@ -74,6 +74,15 @@
     });
   }
 
+  // 차종 사진과 출처 표시. 촬영자·라이선스·원문 링크가 없는 사진은 보이지 않는다 (check.js도 막는다)
+  function shotHtml(im) {
+    if (!im || !im.by || !im.license || !/^https:\/\//.test(im.page || "")) return "";
+    var lic = /^https:\/\//.test(im.licenseUrl || "")
+      ? '<a href="' + esc(im.licenseUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(im.license) + "</a>" : esc(im.license);
+    return '<figure class="shot"><img src="' + esc(im.file) + '" alt="' + esc(im.alt) + '" width="' + (+im.w || 960) + '" height="' + (+im.h || 640) + '" loading="lazy" decoding="async">' +
+      "<figcaption>사진: " + esc(im.by) + " · " + lic + ' · <a href="' + esc(im.page) + '" target="_blank" rel="noopener noreferrer">Wikimedia Commons</a></figcaption></figure>';
+  }
+
   function renderModels() {
     var host = $("models");
     host.innerHTML = MODELS.map(function (m) {
@@ -87,7 +96,7 @@
           '<span><span class="c">' + r.e.code + '</span><span class="d">' + r.d + '</span></span>' +
           '<span class="l">' + r.e.disp + 'L</span></button>';
       }).join("");
-      return '<section class="model"><h3>' + m + '</h3><div class="rows">' + html + '</div></section>';
+      return '<section class="model"><h3>' + esc(m) + '</h3>' + shotHtml(IMG[m]) + '<div class="rows">' + html + '</div></section>';
     }).join("");
     host.querySelectorAll(".row").forEach(function (b) {
       b.addEventListener("click", function () {
