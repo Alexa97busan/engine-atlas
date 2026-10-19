@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>르노코리아 엔진 도감</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@300;400;500;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Renault Samsung · Renault Korea</div>
+    <h1>르노코리아 엔진 도감</h1>
+    <p class="lede">한국에서 판매된 르노삼성·르노코리아 차종에 들어간 엔진을 형식명, 연료, 배기량, 적용 차종으로 정리했습니다. 정비 이론 학습용입니다.</p>
+    <div class="count" id="stats"></div>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="보기 방식">
+    <button class="tab" role="tab" id="t-eng" aria-selected="true" data-tab="eng">엔진별</button>
+    <button class="tab" role="tab" id="t-mod" aria-selected="false" data-tab="mod">차종별</button>
+    <button class="tab" role="tab" id="t-tbl" aria-selected="false" data-tab="tbl">연식별 제원표</button>
+    <button class="tab" role="tab" id="t-dec" aria-selected="false" data-tab="dec">형식명 읽기</button>
+    <button class="tab" role="tab" id="t-quiz" aria-selected="false" data-tab="quiz">퀴즈</button>
+  </div>
+
+  <section id="p-eng" role="tabpanel" aria-labelledby="t-eng">
+    <div class="controls">
+      <input class="search" id="q" type="search" placeholder="형식명 또는 차종 검색 (예: M5R, QM6)" autocomplete="off">
+      <div class="chip-row" id="fuel-chips"><span class="chip-label">연료</span></div>
+      <div class="chip-row" id="origin-chips"><span class="chip-label">계열</span></div>
+      <div class="count" id="count"></div>
+    </div>
+    <div class="grid" id="grid" style="margin-top:16px"></div>
+  </section>
+
+  <section id="p-mod" role="tabpanel" aria-labelledby="t-mod" hidden>
+    <div class="models" id="models"></div>
+  </section>
+
+  <section id="p-tbl" role="tabpanel" aria-labelledby="t-tbl" hidden>
+    <div class="controls">
+      <p class="lede" style="margin:0">직접 정리한 연식별 제원표입니다. 나무위키와 웹 검색으로 대조해 오류를 고쳤습니다. 출처가 없는 행은 "확인 필요"로 표시되며, 출처를 채우면 사라집니다.</p>
+      <input class="search" id="tq" type="search" placeholder="차종 또는 엔진 검색 (예: M4RN, 조에)" autocomplete="off">
+      <div class="chip-row" id="t-models"><span class="chip-label">차종</span></div>
+      <div class="chip-row" id="t-flags"><span class="chip-label">표시</span></div>
+      <div class="count" id="tcount"></div>
+    </div>
+    <div class="tscroll tbig"><table class="tbl" id="tbl"></table></div>
+  </section>
+
+  <section id="p-dec" role="tabpanel" aria-labelledby="t-dec" hidden>
+    <div class="dec">
+      <p class="lede">1980년대 중반 이후 르노 엔진 형식명은 <span class="mono">X n Y</span> 세 글자가 기본입니다. 앞 글자는 엔진 계열, 가운데 숫자는 구조, 마지막 글자는 배기량입니다. 아래에 형식명을 넣으면 풀어서 보여줍니다.</p>
+      <div class="chip-row"><label class="chip-label" for="dcode" style="min-width:auto">형식명</label>
+        <input class="search" id="dcode" value="M5R" maxlength="8" autocomplete="off" spellcheck="false" style="max-width:180px;font-family:var(--font-mono)">
+        <span id="dex" class="chip-row"></span>
+      </div>
+      <div class="parts" id="parts" aria-live="polite"></div>
+      <p class="note" id="dnote"></p>
+
+      <div class="dgrid">
+        <div>
+          <h3 class="dh">가운데 숫자: 구조</h3>
+          <div class="tscroll"><table class="dtable" id="arch"></table></div>
+        </div>
+        <div>
+          <h3 class="dh">마지막 글자: 배기량</h3>
+          <div class="tscroll"><table class="dtable" id="dispt"></table></div>
+          <p class="note">규칙상 A는 750cc 미만, B~U는 750~2,250cc 구간을 50cc 단위로 시작해 점차 100cc 단위로 늘어납니다. V~Z는 2,250cc를 넘는 큰 배기량입니다. 위 표는 이 도감에 나온 글자만 적었고 L 값은 근삿값입니다.</p>
+        </div>
+      </div>
+
+      <div class="quiz" style="margin-top:8px">
+        <div class="q-meta"><span id="d-score">정답 0 / 0</span><span>글자 → 배기량</span></div>
+        <div><div class="q-code" id="d-code"></div><div class="q-sub" id="d-sub">마지막 글자가 뜻하는 배기량은?</div></div>
+        <div class="opts" id="d-opts"></div>
+        <div class="fb" id="d-fb" aria-live="polite"></div>
+        <button class="next" id="d-next" disabled>다음 문제</button>
+      </div>
+
+      <h3 class="dh" style="margin-top:8px">알아두면 좋은 점</h3>
+      <ul class="tips">
+        <li>숫자와 구조의 짝은 위키백과 목록 순서를 기준으로 정리했고, K4M(4밸브), K7M(2밸브), K9K(직분사 디젤), M5R(직분사 가솔린)로 맞춰봤습니다.</li>
+        <li>규칙상 끝의 세 글자 코드는 터보 여부, 장착 차종, 변속기 종류를 나타내며, 홀수는 자동변속기, 짝수는 수동변속기용입니다. 국내 자료의 M4RK, M4RN, M4RV처럼 한 글자만 붙은 표기는 이 규칙과 다를 수 있어 변형 구분 정도로 보면 됩니다.</li>
+        <li>QG15DE, SR20, VQ35DE, QR25DE는 닛산 형식명이라 이 규칙에 맞지 않습니다. 르노삼성 초기 차종은 닛산 엔진이라는 뜻입니다.</li>
+        <li>H 계열은 두 갈래입니다. 소형군(0.9~1.33L)은 르노·메르세데스·닛산이 함께 개발했고, 대형군(1.0~1.6L)은 르노와 닛산이 함께 개발했습니다. XM3의 1.3 TCe는 배기량으로 보아 소형군에 해당하고, SM3의 1.6(H4M)은 대형군에 해당합니다.</li>
+        <li>K 계열은 E형의 발전형으로 K4M과 K7M은 1,598cc(16밸브, 8밸브), K9K는 1,461cc 디젤(dCi)입니다.</li>
+      </ul>
+      <p class="note">출처: 위키백과 List of Renault engines</p>
+    </div>
+  </section>
+
+  <section id="p-quiz" role="tabpanel" aria-labelledby="t-quiz" hidden>
+    <div class="quiz">
+      <div class="q-meta"><span id="q-score">정답 0 / 0</span><span>엔진 → 차종</span></div>
+      <div>
+        <div class="q-code" id="q-code"></div>
+        <div class="q-sub" id="q-sub"></div>
+      </div>
+      <div class="opts" id="opts"></div>
+      <div class="fb" id="fb" aria-live="polite"></div>
+      <button class="next" id="next" disabled>다음 문제</button>
+    </div>
+  </section>
+
+  <footer>
+    <p>출처는 나무위키의 르노 M 가솔린 엔진, SM3, SM5, SM6, SM7, QM3, QM5, QM6, XM3, 그랑 콜레오스 문서입니다 (CC BY-NC-SA 2.0 KR). 형식명 읽기 탭은 위키백과 List of Renault engines를 참고했습니다. 나무위키는 틀린 서술이 있을 수 있어 시험 전에는 교재와 정비지침서로 다시 확인하세요.</p>
+    <p>"형식명 미확인" 표시는 출처 문서에 엔진 형식명이 적혀 있지 않았던 항목입니다. 출력은 문서에 적힌 ps 또는 마력 값 그대로이며 연식과 시장에 따라 다를 수 있습니다.</p>
+  </footer>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

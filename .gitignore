@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+._*
+
+# 에디터
+.vscode/
+.idea/
+*.swp
+
+# 로컬 작업물
+node_modules/
+*.log
+.env
+.env.*
+*.xlsx
+*.ods
+~$*
