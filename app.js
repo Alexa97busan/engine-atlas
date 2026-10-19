@@ -96,11 +96,13 @@
   }
 
   function setTab(name) {
-    ["eng", "mod", "tbl", "dec", "quiz"].forEach(function (n) {
+    ["eng", "mod", "tbl", "tm", "dec", "quiz"].forEach(function (n) {
       var on = n === name;
       $("t-" + n).setAttribute("aria-selected", on ? "true" : "false");
       $("p-" + n).hidden = !on;
     });
+    // 좁은 화면에서 탭 줄이 가로로 스크롤되므로 고른 탭이 보이게 한다
+    try { $("t-" + name).scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {}
     try { history.replaceState(null, "", "#" + name); } catch (e) {}
   }
   document.querySelectorAll(".tab").forEach(function (t) {
@@ -142,7 +144,9 @@
   $("next").addEventListener("click", nextQ);
 
   // 연식별 제원표
-  var TST = { m: "전체", f: "전체", q: "" };
+  var TST = { m: "전체", t: "전체", f: "전체", q: "" };
+  // 한 행이 여러 변속기 종류에 걸릴 수 있다 (예: 4AT/5MT)
+  function tmOf(r) { return TM.filter(function (t) { return new RegExp(t.match).test(r[3] + " " + r[7]); }); }
   // 출처가 없고 상태 표시("수정"/"확인됨")도 없는 행은 "확인 필요"로 본다.
   function needsSrc(r) { return !r[13] && !r[11]; }
   function srcHtml(src) {
@@ -152,7 +156,7 @@
       : esc(src);
     return '<span class="src">출처: ' + link + "</span>";
   }
-  var TM = ["전체"]; TBL.forEach(function (r) { if (TM.indexOf(r[10]) < 0) TM.push(r[10]); });
+  var TMOD = ["전체"]; TBL.forEach(function (r) { if (TMOD.indexOf(r[10]) < 0) TMOD.push(r[10]); });
   function tchips(id, list, key) {
     var host = $(id);
     list.forEach(function (v) {
@@ -166,13 +170,15 @@
       host.appendChild(b);
     });
   }
-  tchips("t-models", TM, "m");
+  tchips("t-models", TMOD, "m");
+  tchips("t-tms", ["전체"].concat(TM.map(function (t) { return t.chip; })), "t");
   tchips("t-flags", ["전체", "수정함", "웹 확인됨", "변경 없음", "출처 필요"], "f");
   $("tq").addEventListener("input", function (e) { TST.q = e.target.value.trim().toLowerCase(); renderTbl(); });
   function esc(x) { return String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
   function renderTbl() {
     var list = TBL.filter(function (r) {
       if (TST.m !== "전체" && r[10] !== TST.m) return false;
+      if (TST.t !== "전체" && !tmOf(r).some(function (t) { return t.chip === TST.t; })) return false;
       if (TST.f === "수정함" && r[11] !== "fix") return false;
       if (TST.f === "웹 확인됨" && r[11] !== "ok") return false;
       if (TST.f === "변경 없음" && r[11]) return false;
@@ -196,6 +202,36 @@
     $("tbl").innerHTML = h + "<tbody>" + b + "</tbody>";
   }
   renderTbl();
+
+  // 변속기
+  function syncChips(id, v) { $(id).querySelectorAll(".chip").forEach(function (c) { c.setAttribute("aria-pressed", c.textContent === v ? "true" : "false"); }); }
+  function renderTm() {
+    $("tmcount").textContent = TM.length + "종 · 제원표 " + TBL.length + "행 기준";
+    $("tms").innerHTML = TM.map(function (t) {
+      var rows = TBL.filter(function (r) { return tmOf(r).indexOf(t) >= 0; });
+      var dl = [["장점", t.pros], ["단점", t.cons], ["알아둘 점", t.check]].filter(function (x) { return x[1]; })
+        .map(function (x) { return "<dt>" + x[0] + "</dt><dd>" + esc(x[1]) + "</dd>"; }).join("");
+      var src = t.src.length ? t.src.map(srcHtml).join("") : '<span class="sev need"><i></i>확인 필요</span>';
+      var list = rows.map(function (r) {
+        return '<button class="row" type="button" data-row="' + TBL.indexOf(r) + '">' +
+          '<span class="dot" style="--c:var(--muted)"></span>' +
+          '<span><span class="c">' + esc(r[0]) + '</span><span class="d">' + esc(r[2]) + " · " + esc(r[7]) + "</span></span>" +
+          '<span class="l">' + esc(r[1]) + "</span></button>";
+      }).join("");
+      return '<section class="model"><h3>' + esc(t.name) + ' <span class="flag">' + esc(t.en) + "</span></h3>" +
+        '<p class="tm-how">' + esc(t.how) + "</p>" + (dl ? '<dl class="tm-pc">' + dl + "</dl>" : "") + "<div>" + src + "</div>" +
+        '<div class="count">제원표 ' + rows.length + "행</div><div class=\"rows\">" + list + "</div></section>";
+    }).join("");
+    $("tms").querySelectorAll(".row").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var r = TBL[+b.getAttribute("data-row")];
+        TST.m = "전체"; TST.f = "전체"; TST.t = "전체"; TST.q = r[0].toLowerCase(); $("tq").value = r[0];
+        syncChips("t-models", "전체"); syncChips("t-tms", "전체"); syncChips("t-flags", "전체");
+        renderTbl(); setTab("tbl");
+      });
+    });
+  }
+  renderTm();
 
   // 형식명 읽기
   var ARCH = [
@@ -266,5 +302,5 @@
 
   renderEngines(); renderModels(); nextQ();
   var h = (location.hash || "").replace("#", "");
-  if (h === "mod" || h === "tbl" || h === "dec" || h === "quiz" || h === "eng") setTab(h);
+  if (["eng", "mod", "tbl", "tm", "dec", "quiz"].indexOf(h) >= 0) setTab(h);
 })();
