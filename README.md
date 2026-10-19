@@ -24,7 +24,7 @@
 
 ## 공유 (GitHub Pages)
 
-저장소 Settings → Pages → Branch `main` / `(root)` 를 선택하면 `https://<아이디>.github.io/engine-atlas/` 로 열립니다.
+https://alexa97busan.github.io/engine-atlas/ 에서 볼 수 있습니다. `main`에 합쳐진 변경은 1분 안팎으로 자동 반영됩니다. (설정: 저장소 Settings → Pages → Branch `main` / `(root)`)
 
 ## 출처
 

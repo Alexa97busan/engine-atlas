@@ -3,7 +3,7 @@
 제원표를 친구들과 나눠서 채우고, 서로 검토합니다. 수정 전에 `AGENTS.md`의 데이터 규칙을 읽어 주세요.
 
 ## 순서
-1. 저장소를 받습니다. `git clone https://github.com/<아이디>/engine-atlas.git`
+1. 저장소를 받습니다. `git clone https://github.com/Alexa97busan/engine-atlas.git`
 2. 내 작업용 브랜치를 만듭니다. `git checkout -b sm7-vq25`
 3. `data.js`의 `TBL` 끝에 행을 추가하거나 고칩니다.
 4. `node check.js` 로 형식을 확인합니다.
