@@ -1,4 +1,9 @@
 (function () {
+  // 브라우저에 저장된 옛 data.js와 새 app.js가 섞이면 화면이 비므로, 그때는 새로고침을 안내한다
+  if (typeof E === "undefined" || typeof TBL === "undefined" || typeof TM === "undefined") {
+    document.querySelector(".wrap").insertAdjacentHTML("afterbegin", '<p class="note">데이터를 불러오지 못했습니다. Ctrl+F5(맥은 Cmd+Shift+R)로 새로고침해 주세요.</p>');
+    return;
+  }
   var FUEL_COLOR = { "가솔린": "var(--f-gas)", "디젤": "var(--f-dsl)", "LPG": "var(--f-lpg)", "하이브리드": "var(--f-hyb)" };
 
 
