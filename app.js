@@ -75,12 +75,21 @@
   }
 
   // 차종 사진과 출처 표시. 촬영자·라이선스·원문 링크가 없는 사진은 보이지 않는다 (check.js도 막는다)
-  function shotHtml(im) {
-    if (!im || !im.by || !im.license || !/^https:\/\//.test(im.page || "")) return "";
+  function shotOk(im) { return !!(im && im.by && im.license && /^https:\/\//.test(im.page || "")); }
+  function shotInner(im) {
     var lic = /^https:\/\//.test(im.licenseUrl || "")
       ? '<a href="' + esc(im.licenseUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(im.license) + "</a>" : esc(im.license);
-    return '<figure class="shot"><img src="' + esc(im.file) + '" alt="' + esc(im.alt) + '" width="' + (+im.w || 960) + '" height="' + (+im.h || 640) + '" loading="lazy" decoding="async">' +
-      "<figcaption>사진: " + esc(im.by) + " · " + lic + ' · <a href="' + esc(im.page) + '" target="_blank" rel="noopener noreferrer">Wikimedia Commons</a></figcaption></figure>';
+    return '<img src="' + esc(im.file) + '" alt="' + esc(im.alt) + '" width="' + (+im.w || 960) + '" height="' + (+im.h || 640) + '" loading="lazy" decoding="async">' +
+      "<figcaption>사진: " + esc(im.by) + " · " + lic + ' · <a href="' + esc(im.page) + '" target="_blank" rel="noopener noreferrer">Wikimedia Commons</a></figcaption>';
+  }
+  // 차종 사진 목록(오래된 세대 → 최신). 처음에는 최신 사진을 보여 주고, 둘 이상이면 세대 버튼을 붙인다
+  function shotsHtml(list) {
+    var ims = (list || []).filter(shotOk);
+    if (!ims.length) return "";
+    var gens = ims.length < 2 ? "" : '<div class="gens" role="group" aria-label="세대별 사진">' + ims.map(function (im, i) {
+      return '<button class="gen" type="button" data-i="' + i + '" aria-pressed="' + (i === ims.length - 1 ? "true" : "false") + '">' + esc(im.gen || "") + "</button>";
+    }).join("") + "</div>";
+    return '<figure class="shot">' + shotInner(ims[ims.length - 1]) + "</figure>" + gens;
   }
 
   function renderModels() {
@@ -96,8 +105,17 @@
           '<span><span class="c">' + r.e.code + '</span><span class="d">' + r.d + '</span></span>' +
           '<span class="l">' + r.e.disp + 'L</span></button>';
       }).join("");
-      return '<section class="model"><h3>' + esc(m) + '</h3>' + shotHtml(IMG[m]) + '<div class="rows">' + html + '</div></section>';
+      return '<section class="model"><h3>' + esc(m) + '</h3>' + shotsHtml(IMG[m]) + '<div class="rows">' + html + '</div></section>';
     }).join("");
+    host.querySelectorAll(".model").forEach(function (sec, k) {
+      var ims = (IMG[MODELS[k]] || []).filter(shotOk), fig = sec.querySelector(".shot");
+      sec.querySelectorAll(".gen").forEach(function (g) {
+        g.addEventListener("click", function () {
+          fig.innerHTML = shotInner(ims[+g.getAttribute("data-i")]);
+          sec.querySelectorAll(".gen").forEach(function (o) { o.setAttribute("aria-pressed", o === g ? "true" : "false"); });
+        });
+      });
+    });
     host.querySelectorAll(".row").forEach(function (b) {
       b.addEventListener("click", function () {
         $("q").value = b.getAttribute("data-code"); state.q = $("q").value.toLowerCase();
